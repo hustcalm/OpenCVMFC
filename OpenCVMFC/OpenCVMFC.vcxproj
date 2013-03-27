@@ -100,6 +100,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
     <None Include="ReadMe.txt" />
     <None Include="res\classview.bmp" />
     <None Include="res\classview_hc.bmp" />
@@ -169,4 +170,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="OpenCVMFC.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

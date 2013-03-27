@@ -12,8 +12,13 @@ protected: // create from serialization only
 	COpenCVMFCDoc();
 	DECLARE_DYNCREATE(COpenCVMFCDoc)
 
+	BOOL Load(IplImage** pImg, LPCTSTR pszFilename);
+	BOOL Save(LPCTSTR pszFilename, IplImage* pImg);
+
 // Attributes
 public:
+	IplImage*	pImg;
+	int			m_Display;
 
 // Operations
 public:
@@ -22,6 +27,9 @@ public:
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
+
+	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+
 #ifdef SHARED_HANDLERS
 	virtual void InitializeSearchContent();
 	virtual void OnDrawThumbnail(CDC& dc, LPRECT lprcBounds);

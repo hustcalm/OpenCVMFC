@@ -119,7 +119,6 @@ BOOL COpenCVMFCApp::InitInstance()
 		return FALSE;
 	AddDocTemplate(pDocTemplate);
 
-
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);

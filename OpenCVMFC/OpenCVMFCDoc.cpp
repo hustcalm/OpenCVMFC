@@ -30,11 +30,15 @@ END_MESSAGE_MAP()
 COpenCVMFCDoc::COpenCVMFCDoc()
 {
 	// TODO: add one-time construction code here
-
+	pImg = NULL;
+	m_Display = -1;
 }
 
 COpenCVMFCDoc::~COpenCVMFCDoc()
 {
+	// Release Image
+	if (pImg)
+		cvReleaseImage(&pImg);
 }
 
 BOOL COpenCVMFCDoc::OnNewDocument()
@@ -135,3 +139,50 @@ void COpenCVMFCDoc::Dump(CDumpContext& dc) const
 
 
 // COpenCVMFCDoc commands
+
+BOOL COpenCVMFCDoc::OnOpenDocument(LPCTSTR lpszPathName) 
+{
+	if (!CDocument::OnOpenDocument(lpszPathName))
+		return FALSE;
+
+	// TODO: Add your specialized creation code here
+	BOOL loadStatus;
+
+	Load(&pImg, lpszPathName);
+	if (pImg != NULL) 
+		loadStatus = true;
+	else 
+		loadStatus = false;
+	return(loadStatus);
+}
+
+//---------------------------------------------------------
+//---------------------------------------------------------
+//  ImageIO
+
+BOOL COpenCVMFCDoc::Load(IplImage** pp, LPCTSTR csFileName)
+{
+	IplImage* pImg = NULL;
+
+	pImg = cvLoadImage(csFileName,-1);      //  Read Image File (DSCV)
+	if (!pImg) 
+		return(false);
+	cvFlip(pImg);                           //  Flip to convert to DIB Format
+
+	if (*pp) {
+		cvReleaseImage(pp);
+	}
+
+	(*pp) = pImg;
+	m_Display = 0;
+	return(true);
+}
+
+BOOL COpenCVMFCDoc::Save(LPCTSTR csFileName,IplImage* pImg)
+{
+	int   saveStatus;
+
+	cvFlip(pImg);                           //  Restore to OpenCV Image Format
+	saveStatus = cvSaveImage(csFileName,pImg);        //  Save Image To Disk
+	return(saveStatus);
+}
