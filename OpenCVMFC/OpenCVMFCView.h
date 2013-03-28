@@ -5,7 +5,7 @@
 #pragma once
 
 
-class COpenCVMFCView : public CView
+class COpenCVMFCView : public CScrollView
 {
 protected: // create from serialization only
 	COpenCVMFCView();
@@ -23,6 +23,9 @@ public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
+	virtual void OnInitialUpdate(); // called first time after construct
+
+protected:
 	virtual BOOL OnPreparePrinting(CPrintInfo* pInfo);
 	virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
 	virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
@@ -36,6 +39,15 @@ public:
 #endif
 
 protected:
+	IplImage* saveImg;
+	IplImage* workImg;
+
+	LPBITMAPINFO m_lpBmi;
+
+	int     m_CaptFlag;
+	int     m_dibFlag;
+	int     m_SaveFlag;
+	int     m_ImageType;
 
 // Generated message map functions
 protected:
