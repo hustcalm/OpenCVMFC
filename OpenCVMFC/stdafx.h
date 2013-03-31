@@ -42,8 +42,10 @@
 
 #include "OpenCVMFC.h"                          //  窗口管理
 
-#include "cv.h"                             //  OpenCV 文件头
-#include "highgui.h"
+#include <cv.h>                             //  OpenCV 文件头
+#include <highgui.h>
+
+
 
 #include "CameraDS.h"                       //  DirectShow(基于OpenCV)
 #include "CVDSCap.h"                        //  视频采集接口
