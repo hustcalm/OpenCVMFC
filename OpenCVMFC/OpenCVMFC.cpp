@@ -44,7 +44,7 @@ COpenCVMFCApp::COpenCVMFCApp()
 
 	// TODO: replace application ID string below with unique ID string; recommended
 	// format for string is CompanyName.ProductName.SubProduct.VersionInformation
-	SetAppID(_T("OpenCVMFC.AppID.NoVersion"));
+	SetAppID(_T("GeekBoy.CV.OpenCVMFC.1.0"));
 
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
