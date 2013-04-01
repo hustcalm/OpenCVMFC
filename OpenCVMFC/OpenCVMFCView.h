@@ -55,6 +55,17 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnUpdateFileOpen(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateRefresh(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateFileClose(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateConservationImage(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateColorImageRefresh(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateFileSaveAs(CCmdUI *pCmdUI);
+	afx_msg void OnRefresh();
+	afx_msg void OnConservationImage();
+	afx_msg void OnFileSaveAs();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp

@@ -28,6 +28,15 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &COpenCVMFCView::OnFilePrintPreview)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
+	ON_UPDATE_COMMAND_UI(ID_FILE_OPEN, &COpenCVMFCView::OnUpdateFileOpen)
+	ON_UPDATE_COMMAND_UI(ID_REFRESH, &COpenCVMFCView::OnUpdateRefresh)
+	ON_UPDATE_COMMAND_UI(ID_FILE_CLOSE, &COpenCVMFCView::OnUpdateFileClose)
+	ON_UPDATE_COMMAND_UI(ID_CONSERVATION_IMAGE, &COpenCVMFCView::OnUpdateConservationImage)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_IMAGE_REFRESH, &COpenCVMFCView::OnUpdateColorImageRefresh)
+	ON_UPDATE_COMMAND_UI(ID_FILE_SAVE_AS, &COpenCVMFCView::OnUpdateFileSaveAs)
+	ON_COMMAND(ID_REFRESH, &COpenCVMFCView::OnRefresh)
+	ON_COMMAND(ID_CONSERVATION_IMAGE, &COpenCVMFCView::OnConservationImage)
+	ON_COMMAND(ID_FILE_SAVE_AS, &COpenCVMFCView::OnFileSaveAs)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -213,3 +222,117 @@ COpenCVMFCDoc* COpenCVMFCView::GetDocument() const // non-debug version is inlin
 
 
 // COpenCVMFCView message handlers
+
+// Image Restore and Save
+
+void COpenCVMFCView::OnUpdateFileOpen(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable(m_ImageType != -3);
+}
+
+
+void COpenCVMFCView::OnUpdateRefresh(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
+}
+
+
+void COpenCVMFCView::OnUpdateFileClose(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
+}
+
+
+void COpenCVMFCView::OnUpdateConservationImage(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
+}
+
+
+void COpenCVMFCView::OnUpdateColorImageRefresh(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
+}
+
+
+void COpenCVMFCView::OnUpdateFileSaveAs(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
+}
+
+
+void COpenCVMFCView::OnRefresh()
+{
+	// TODO: Add your command handler code here
+	m_dibFlag = imageClone(saveImg,&workImg);
+	m_ImageType = m_SaveFlag;
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnConservationImage()
+{
+	// TODO: Add your command handler code here
+	COpenCVMFCDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	pDoc->m_Display = 0;
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnFileSaveAs()
+{
+	// TODO: Add your command handler code here
+	CString csBMP = "BMP Files(*.BMP)|*.BMP|";
+	CString csJPG = "JPEG Files(*.JPG)|*.JPG|";
+	CString csTIF = "TIF Files(*.TIF)|*.TIF|";
+	CString csPNG = "PNG Files(*.PNG)|*.PNG|";
+	CString csDIB = "DIB Files(*.DIB)|*.DIB|";
+	CString csPBM = "PBM Files(*.PBM)|*.PBM|";
+	CString csPGM = "PGM Files(*.PGM)|*.PGM|";
+	CString csPPM = "PPM Files(*.PPM)|*.PPM|";
+	CString csSR  = "SR  Files(*.SR) |*.SR|";
+	CString csRAS = "RAS Files(*.RAS)|*.RAS||";
+
+	CString csFilter = csBMP+csJPG+csTIF+csPNG+csDIB
+		+csPBM+csPGM+csPPM+csSR+csRAS;
+
+	CString name[]={"","bmp","jpg","tif","png","dib",
+		"pbm","pgm","ppm","sr", "ras",""};
+
+	CString strFileName;
+	CString strExtension;
+
+	CFileDialog FileDlg(false,NULL,NULL,OFN_HIDEREADONLY,csFilter);		//  Save File Dialog
+
+	if (FileDlg.DoModal() == IDOK ) {
+		strFileName = FileDlg.m_ofn.lpstrFile;
+		if (FileDlg.m_ofn.nFileExtension == 0) {  //  No Extension
+			strExtension = name[FileDlg.m_ofn.nFilterIndex];
+			strFileName = strFileName + '.' + strExtension;
+			//  Add Extension
+		}
+
+		COpenCVMFCDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+
+		pDoc->Save(strFileName,workImg);   //  Save The Image
+	}
+}
+
+void COpenCVMFCView::OnSize(UINT nType, int cx, int cy) 
+{
+	CScrollView::OnSize(nType, cx, cy);
+
+	if (workImg) {                          //  Refresh Window
+		CSize  sizeTotal;
+		sizeTotal = CSize(workImg->width,workImg->height);
+		SetScrollSizes(MM_TEXT, sizeTotal);   //  Set The Scroll Bar
+	}
+}
