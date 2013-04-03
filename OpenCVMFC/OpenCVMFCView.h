@@ -83,6 +83,12 @@ public:
 	afx_msg void OnWarpAffine();
 	afx_msg void OnUpdateWarpPerspect(CCmdUI *pCmdUI);
 	afx_msg void OnWarpPerspect();
+	afx_msg void OnUpdateImageAdjust(CCmdUI *pCmdUI);
+	afx_msg void OnImageAdjust();
+	afx_msg void OnUpdateImageHistogram(CCmdUI *pCmdUI);
+	afx_msg void OnImageHistogram();
+	afx_msg void OnUpdateHistEqualize(CCmdUI *pCmdUI);
+	afx_msg void OnHistEqualize();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp

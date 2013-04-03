@@ -54,6 +54,12 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_WARP_AFFINE, &COpenCVMFCView::OnWarpAffine)
 	ON_UPDATE_COMMAND_UI(ID_WARP_PERSPECT, &COpenCVMFCView::OnUpdateWarpPerspect)
 	ON_COMMAND(ID_WARP_PERSPECT, &COpenCVMFCView::OnWarpPerspect)
+	ON_UPDATE_COMMAND_UI(ID_IMAGE_ADJUST, &COpenCVMFCView::OnUpdateImageAdjust)
+	ON_COMMAND(ID_IMAGE_ADJUST, &COpenCVMFCView::OnImageAdjust)
+	ON_UPDATE_COMMAND_UI(ID_IMAGE_HISTOGRAM, &COpenCVMFCView::OnUpdateImageHistogram)
+	ON_COMMAND(ID_IMAGE_HISTOGRAM, &COpenCVMFCView::OnImageHistogram)
+	ON_UPDATE_COMMAND_UI(ID_HIST_EQUALIZE, &COpenCVMFCView::OnUpdateHistEqualize)
+	ON_COMMAND(ID_HIST_EQUALIZE, &COpenCVMFCView::OnHistEqualize)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -413,6 +419,7 @@ void COpenCVMFCView::OnColorToGray()
 
 	m_SaveFlag = m_ImageType = 1;
 
+	//cvReleaseImage( &pImage);
 	cvReleaseImage( &pImg8u);
 
 	Invalidate();
@@ -674,4 +681,226 @@ void COpenCVMFCView::OnWarpPerspect()
 	cvReleaseMat(&warp_matrix);
 
 	m_ImageType=imageType(workImg);
+}
+
+
+void COpenCVMFCView::OnUpdateImageAdjust(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+//  Image Adjust
+
+/*
+  src and dst are grayscale, 8-bit images;
+  Default input value: 
+           [low, high] = [0,1];  X-Direction
+           [bottom, top] = [0,1]; Y-Direction
+           gamma ;
+  if adjust successfully, return 0, otherwise, return non-zero.
+*/
+int ImageAdjust(IplImage* src, IplImage* dst, 
+    	double low, double high,   // X£ºlow and high are the intensities of src
+    	double bottom, double top, // Y£ºmapped to bottom and top of dst
+    	double gamma )
+{
+	if (low<0 && low>1 && high <0 && high>1&&
+		bottom<0 && bottom>1 && top<0 && top>1 && low>high)
+        return -1;
+
+    double low2 = low*255;
+    double high2 = high*255;
+    double bottom2 = bottom*255;
+    double top2 = top*255;
+    double err_in = high2 - low2;
+    double err_out = top2 - bottom2;
+
+    int x,y;
+    double val;
+
+    // intensity transform
+    for( y = 0; y < src->height; y++)
+    {
+        for (x = 0; x < src->width; x++)
+        {
+            val = ((uchar*)(src->imageData + src->widthStep*y))[x]; 
+            val = pow((val - low2)/err_in, gamma) * err_out + bottom2;
+            if(val > 255) val = 255; if(val < 0) val = 0; // Make sure src is in the range [low,high]
+            ((uchar*)(dst->imageData + dst->widthStep*y))[x] = (uchar) val;
+        }
+    }
+    return 0;
+}
+
+
+void COpenCVMFCView::OnImageAdjust()
+{
+	// TODO: Add your command handler code here
+
+	IplImage *src = 0, *dst = 0;
+
+	src = workImg;
+
+	cvNamedWindow( "src", 1 );
+	cvNamedWindow( "result", 1 );
+
+	// Image adjust
+	dst = cvCloneImage(src);
+	// Input parameter [0,0.5] and [0.5,1], gamma=1
+	if( ImageAdjust( src, dst, 0, 0.5, 0.5, 1, 1) != 0) 
+		return;
+
+	cvShowImage( "src", src );
+	cvFlip(dst);
+	cvShowImage( "result", dst );
+	cvWaitKey(0);
+
+	cvDestroyWindow("src");
+	cvDestroyWindow("result");
+
+	cvFlip(dst);
+	m_dibFlag = imageReplace(dst, &workImg);
+
+	//cvReleaseImage( &src );
+	cvReleaseImage(&dst);
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateImageHistogram(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnImageHistogram()
+{
+	// TODO: Add your command handler code here
+
+	IplImage *src;
+	IplImage *histimg = 0;
+	CvHistogram *hist = 0;
+
+	int hdims = 256;     // Divide Number of HIST, the more the accurator
+	float hranges_arr[] = {0,255};
+	float* hranges = hranges_arr;
+	int bin_w;  
+	float max_val;
+	int i;
+
+	src = workImg;
+
+	cvNamedWindow( "Histogram", 0 );
+
+	hist = cvCreateHist( 1, &hdims, CV_HIST_ARRAY, &hranges, 1 );  // Create Hist
+	histimg = cvCreateImage( cvSize(320,200), 8, 3 );
+	cvZero( histimg );
+	cvCalcHist( &src, hist, 0, 0 ); // Caculate Hist
+	cvGetMinMaxHistValue( hist, 0, &max_val, 0, 0 );  // just wanna the Max
+	cvConvertScale( hist->bins, hist->bins, 
+		max_val ? 255. / max_val : 0., 0 ); // resize bin to [0,255] 
+	cvZero( histimg );
+	bin_w = histimg->width / hdims;
+
+	// Draw It
+	for( i = 0; i < hdims; i++ )
+	{
+		double val = ( cvGetReal1D(hist->bins,i)*histimg->height/255 );
+		CvScalar color = CV_RGB(255,255,0); //(hsv2rgb(i*180.f/hdims);
+		cvRectangle( histimg, cvPoint(i*bin_w,histimg->height),
+			cvPoint((i+1)*bin_w,(int)(histimg->height - val)),
+			color, 1, 8, 0 );
+	}
+
+	cvShowImage( "Histogram", histimg );
+
+	cvReleaseImage( &histimg );
+	cvReleaseHist ( &hist );
+	cvWaitKey(0);
+
+	cvDestroyWindow("Histogram");
+}
+
+
+void COpenCVMFCView::OnUpdateHistEqualize(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+#define HDIM    256    // bin of HIST, default = 256
+
+void COpenCVMFCView::OnHistEqualize()
+{
+	// TODO: Add your command handler code here
+
+	IplImage *src = 0, *dst = 0;
+	CvHistogram *hist = 0;
+
+	int n = HDIM;     
+	double nn[HDIM];
+	uchar T[HDIM];
+	CvMat *T_mat;
+
+	int x;
+	int sum = 0; // sum of pixels of the source image
+	double val = 0;
+
+	src = workImg;
+
+	cvNamedWindow( "source", 1 );
+	cvNamedWindow( "result", 1 );
+
+	// Caculate Hist
+	hist = cvCreateHist( 1, &n, CV_HIST_ARRAY, 0, 1 );  
+	cvCalcHist( &src, hist, 0, 0 ); 
+
+	// Create Accumulative Distribute Function of histgram
+	val = 0;
+	for ( x = 0; x < n; x++)
+	{
+		val = val + cvGetReal1D (hist->bins, x);
+		nn[x] = val;
+	}
+
+	// Normalization
+	sum = src->height * src->width;
+	for( x = 0; x < n; x++ )
+	{
+		T[x] = (uchar) (255 * nn[x] / sum); // range is [0,255]
+	}
+
+	// Using look-up table to perform intensity transform for source image 
+	dst = cvCloneImage( src );
+	T_mat = cvCreateMatHeader( 1, 256, CV_8UC1 );
+	cvSetData( T_mat, T, 0 );    
+	// invoke to complete look-up-table
+	cvLUT( src, dst, T_mat ); 
+
+	cvShowImage( "source", src );
+	cvFlip(dst);
+	cvShowImage( "result", dst );
+
+	cvReleaseHist ( &hist );
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("source");
+	cvDestroyWindow("result");
+
+	cvFlip(dst);
+	m_dibFlag = imageReplace(dst,&workImg);
+
+	cvReleaseMat(&T_mat);
+
+	//cvReleaseImage( &src );
+	cvReleaseImage( &dst );
+
+	Invalidate();
 }
