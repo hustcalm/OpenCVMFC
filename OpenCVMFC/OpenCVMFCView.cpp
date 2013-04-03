@@ -37,6 +37,11 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_REFRESH, &COpenCVMFCView::OnRefresh)
 	ON_COMMAND(ID_CONSERVATION_IMAGE, &COpenCVMFCView::OnConservationImage)
 	ON_COMMAND(ID_FILE_SAVE_AS, &COpenCVMFCView::OnFileSaveAs)
+	ON_UPDATE_COMMAND_UI(ID_COLOR_TO_GRAY, &COpenCVMFCView::OnUpdateColorToGray)
+	ON_UPDATE_COMMAND_UI(ID_IMAGE_INVERT, &COpenCVMFCView::OnUpdateImageInvert)
+	ON_COMMAND(ID_COLOR_TO_GRAY, &COpenCVMFCView::OnColorToGray)
+	ON_COMMAND(ID_IMAGE_INVERT, &COpenCVMFCView::OnImageInvert)
+	ON_COMMAND(ID_COLOR_IMAGE_REFRESH, &COpenCVMFCView::OnColorImageRefresh)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -228,6 +233,7 @@ COpenCVMFCDoc* COpenCVMFCView::GetDocument() const // non-debug version is inlin
 void COpenCVMFCView::OnUpdateFileOpen(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
 	pCmdUI->Enable(m_ImageType != -3);
 }
 
@@ -235,6 +241,7 @@ void COpenCVMFCView::OnUpdateFileOpen(CCmdUI *pCmdUI)
 void COpenCVMFCView::OnUpdateRefresh(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
 	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
 }
 
@@ -242,6 +249,7 @@ void COpenCVMFCView::OnUpdateRefresh(CCmdUI *pCmdUI)
 void COpenCVMFCView::OnUpdateFileClose(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
 	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
 }
 
@@ -249,6 +257,7 @@ void COpenCVMFCView::OnUpdateFileClose(CCmdUI *pCmdUI)
 void COpenCVMFCView::OnUpdateConservationImage(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
 	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
 }
 
@@ -256,6 +265,7 @@ void COpenCVMFCView::OnUpdateConservationImage(CCmdUI *pCmdUI)
 void COpenCVMFCView::OnUpdateColorImageRefresh(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
 	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
 }
 
@@ -263,6 +273,7 @@ void COpenCVMFCView::OnUpdateColorImageRefresh(CCmdUI *pCmdUI)
 void COpenCVMFCView::OnUpdateFileSaveAs(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
 	pCmdUI->Enable((m_CaptFlag != 1)&&(m_ImageType != -3));
 }
 
@@ -270,18 +281,32 @@ void COpenCVMFCView::OnUpdateFileSaveAs(CCmdUI *pCmdUI)
 void COpenCVMFCView::OnRefresh()
 {
 	// TODO: Add your command handler code here
+
 	m_dibFlag = imageClone(saveImg,&workImg);
 	m_ImageType = m_SaveFlag;
+
 	Invalidate();
 }
 
+void COpenCVMFCView::OnColorImageRefresh()
+{
+	// TODO: Add your command handler code here
+
+	COpenCVMFCDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	pDoc->m_Display = 0;
+
+	Invalidate();
+}
 
 void COpenCVMFCView::OnConservationImage()
 {
 	// TODO: Add your command handler code here
+
 	COpenCVMFCDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	pDoc->m_Display = 0;
+
 	Invalidate();
 }
 
@@ -289,6 +314,7 @@ void COpenCVMFCView::OnConservationImage()
 void COpenCVMFCView::OnFileSaveAs()
 {
 	// TODO: Add your command handler code here
+
 	CString csBMP = "BMP Files(*.BMP)|*.BMP|";
 	CString csJPG = "JPEG Files(*.JPG)|*.JPG|";
 	CString csTIF = "TIF Files(*.TIF)|*.TIF|";
@@ -336,3 +362,54 @@ void COpenCVMFCView::OnSize(UINT nType, int cx, int cy)
 		SetScrollSizes(MM_TEXT, sizeTotal);   //  Set The Scroll Bar
 	}
 }
+
+
+void COpenCVMFCView::OnUpdateColorToGray(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag == 0)&&(m_ImageType > 1));
+}
+
+
+void COpenCVMFCView::OnUpdateImageInvert(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) &&
+		(m_ImageType) && (m_ImageType != -3));
+}
+
+
+void COpenCVMFCView::OnColorToGray()
+{
+	// TODO: Add your command handler code here
+
+	IplImage* pImage;
+	IplImage* pImg8u = NULL;
+
+	pImage = workImg;
+
+	pImg8u = cvCreateImage(cvGetSize(pImage), IPL_DEPTH_8U, 1);
+
+	cvCvtColor(pImage, pImg8u, CV_BGR2GRAY);
+
+	m_dibFlag=imageReplace(pImg8u,&workImg);
+
+	imageClone(workImg,&saveImg);
+
+	m_SaveFlag=m_ImageType=1;
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnImageInvert()
+{
+	// TODO: Add your command handler code here
+
+	cvNot(workImg,workImg);
+
+	Invalidate();
+}
+

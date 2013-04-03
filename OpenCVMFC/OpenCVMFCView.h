@@ -66,6 +66,11 @@ public:
 	afx_msg void OnConservationImage();
 	afx_msg void OnFileSaveAs();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnUpdateColorToGray(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateImageInvert(CCmdUI *pCmdUI);
+	afx_msg void OnColorToGray();
+	afx_msg void OnImageInvert();
+	afx_msg void OnColorImageRefresh();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp
