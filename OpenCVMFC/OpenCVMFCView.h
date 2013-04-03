@@ -71,6 +71,12 @@ public:
 	afx_msg void OnColorToGray();
 	afx_msg void OnImageInvert();
 	afx_msg void OnColorImageRefresh();
+	afx_msg void OnUpdateFlipV(CCmdUI *pCmdUI);
+	afx_msg void OnFlipV();
+	afx_msg void OnUpdateFlipH(CCmdUI *pCmdUI);
+	afx_msg void OnFlipH();
+	afx_msg void OnUpdateFlip(CCmdUI *pCmdUI);
+	afx_msg void OnFlip();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp

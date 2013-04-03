@@ -42,6 +42,14 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_COLOR_TO_GRAY, &COpenCVMFCView::OnColorToGray)
 	ON_COMMAND(ID_IMAGE_INVERT, &COpenCVMFCView::OnImageInvert)
 	ON_COMMAND(ID_COLOR_IMAGE_REFRESH, &COpenCVMFCView::OnColorImageRefresh)
+	ON_UPDATE_COMMAND_UI(ID_FLIP_V, &COpenCVMFCView::OnUpdateFlipV)
+	ON_COMMAND(ID_FLIP_V, &COpenCVMFCView::OnFlipV)
+	ON_UPDATE_COMMAND_UI(ID_FLIP_H, &COpenCVMFCView::OnUpdateFlipH)
+	ON_COMMAND(ID_FLIP_H, &COpenCVMFCView::OnFlipH)
+	ON_UPDATE_COMMAND_UI(ID_FLIP, &COpenCVMFCView::OnUpdateFlip)
+	ON_COMMAND(ID_FLIP, &COpenCVMFCView::OnFlip)
+	ON_UPDATE_COMMAND_UI(ID_ROTATION_30, &COpenCVMFCView::OnUpdateRotation30)
+	ON_COMMAND(ID_ROTATION_30, &COpenCVMFCView::OnRotation30)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -363,6 +371,7 @@ void COpenCVMFCView::OnSize(UINT nType, int cx, int cy)
 	}
 }
 
+// Point Processing
 
 void COpenCVMFCView::OnUpdateColorToGray(CCmdUI *pCmdUI)
 {
@@ -413,3 +422,71 @@ void COpenCVMFCView::OnImageInvert()
 	Invalidate();
 }
 
+
+
+void COpenCVMFCView::OnUpdateFlipV(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag!=1)&&
+		(m_ImageType)&&(m_ImageType!=-3));
+}
+
+void COpenCVMFCView::OnFlipV()
+{
+	// TODO: Add your command handler code here
+
+	cvFlip(workImg);                        //  Vertical Mirror cvFlip(in,0,0)
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateFlipH(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag!=1)&&
+		(m_ImageType)&&(m_ImageType!=-3));
+}
+
+
+void COpenCVMFCView::OnFlipH()
+{
+	// TODO: Add your command handler code here
+
+	cvFlip(workImg,0,1);                    //  Horizonal Mirror
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateFlip(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag!=1)&&
+		(m_ImageType)&&(m_ImageType!=-3));
+}
+
+
+void COpenCVMFCView::OnFlip()
+{
+	// TODO: Add your command handler code here
+
+	cvFlip(workImg,0,-1);                   //  180 degree rotation
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateRotation30(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+}
+
+
+void COpenCVMFCView::OnRotation30()
+{
+	// TODO: Add your command handler code here
+}
