@@ -70,6 +70,10 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_SOBEL, &COpenCVMFCView::OnSobel)
 	ON_UPDATE_COMMAND_UI(ID_LAPLACE, &COpenCVMFCView::OnUpdateLaplace)
 	ON_COMMAND(ID_LAPLACE, &COpenCVMFCView::OnLaplace)
+	ON_UPDATE_COMMAND_UI(ID_THRESHOLDING_1, &COpenCVMFCView::OnUpdateThresholding1)
+	ON_COMMAND(ID_THRESHOLDING_1, &COpenCVMFCView::OnThresholding1)
+	ON_UPDATE_COMMAND_UI(ID_THRESHOLDING_2, &COpenCVMFCView::OnUpdateThresholding2)
+	ON_COMMAND(ID_THRESHOLDING_2, &COpenCVMFCView::OnThresholding2)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -916,6 +920,7 @@ void COpenCVMFCView::OnHistEqualize()
 	Invalidate();
 }
 
+// Neibours Processing
 
 void COpenCVMFCView::OnUpdateBlurSmooth(CCmdUI *pCmdUI)
 {
@@ -1108,5 +1113,117 @@ void COpenCVMFCView::OnLaplace()
 
 	cvReleaseImage(&pImgLaplace);
 
+	Invalidate();
+}
+
+// Bi-value Image Processing
+
+void COpenCVMFCView::OnUpdateThresholding1(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+char *threWin="Threshold Window";
+IplImage *threImage0 = 0;
+IplImage *threImage  = 0;
+int  Threshold       = 128;
+
+void onThreChange(int pos)
+{
+	cvThreshold(threImage,threImage0,Threshold,
+		255,CV_THRESH_BINARY);
+	cvShowImage( threWin, threImage0 );
+}
+
+void COpenCVMFCView::OnThresholding1()
+{
+	// TODO: Add your command handler code here
+
+	threImage  = cvCloneImage(workImg);
+	cvFlip(threImage);
+	threImage0 = cvCloneImage(threImage);
+
+	cvNamedWindow(threWin, 0);
+	cvResizeWindow(threWin, 300, 320);
+
+	cvCreateTrackbar( "Thresh", threWin, &Threshold, 255, onThreChange );
+	onThreChange(0);
+
+	cvWaitKey(0);
+
+	cvReleaseImage(&threImage);
+	cvDestroyWindow(threWin);
+
+	cvFlip(threImage0);
+	m_dibFlag = imageReplace(threImage0,&workImg);
+
+	m_ImageType = -1;
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateThresholding2(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+void onThreChange2(int pos)
+{
+	cvThreshold(threImage,threImage0,Threshold,
+		255,CV_THRESH_BINARY);
+}
+
+
+void COpenCVMFCView::OnThresholding2()
+{
+	// TODO: Add your command handler code here
+
+	int   flag=0,thre=0;
+
+	threImage  = cvCloneImage(workImg);
+	cvFlip(threImage);
+	threImage0 = cvCloneImage(threImage);
+
+	cvNamedWindow(threWin, 0);
+	cvResizeWindow(threWin, 300, 320);
+
+	cvCreateTrackbar( "Thresh", threWin, &Threshold, 255, onThreChange2 );
+	cvShowImage( threWin, threImage );
+	onThreChange2(0);
+
+	m_ImageType=-3;
+	for (;;) {
+		if (cvWaitKey(40) == 27) 
+			break;
+
+		if (flag == 0) {
+			free(m_lpBmi);
+			m_lpBmi = CtreateMapInfo(workImg,1);
+			flag=1;
+		}
+
+		if (Threshold != thre) {
+			cvCopy(threImage0,workImg);
+			cvFlip(workImg);
+
+			CClientDC dc(this);
+			StretchDIBits(dc.m_hDC,         //  Refresh View
+				0,0,workImg->width,workImg->height,  
+				0,0,workImg->width,workImg->height,
+				workImg->imageData,m_lpBmi,DIB_RGB_COLORS,SRCCOPY);
+			thre = Threshold;
+		}
+	}
+
+	cvReleaseImage(&threImage);
+	cvReleaseImage(&threImage0);
+	cvDestroyWindow(threWin);
+
+	m_ImageType = -1;
 	Invalidate();
 }

@@ -95,6 +95,14 @@ public:
 	afx_msg void OnGaussSmooth();
 	afx_msg void OnUpdateMedianSmooth(CCmdUI *pCmdUI);
 	afx_msg void OnMedianSmooth();
+	afx_msg void OnUpdateSobel(CCmdUI *pCmdUI);
+	afx_msg void OnSobel();
+	afx_msg void OnUpdateLaplace(CCmdUI *pCmdUI);
+	afx_msg void OnLaplace();
+	afx_msg void OnUpdateThresholding1(CCmdUI *pCmdUI);
+	afx_msg void OnThresholding1();
+	afx_msg void OnUpdateThresholding2(CCmdUI *pCmdUI);
+	afx_msg void OnThresholding2();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp
