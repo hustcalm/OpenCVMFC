@@ -66,6 +66,10 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_GAUSS_SMOOTH, &COpenCVMFCView::OnGaussSmooth)
 	ON_UPDATE_COMMAND_UI(ID_MEDIAN_SMOOTH, &COpenCVMFCView::OnUpdateMedianSmooth)
 	ON_COMMAND(ID_MEDIAN_SMOOTH, &COpenCVMFCView::OnMedianSmooth)
+	ON_UPDATE_COMMAND_UI(ID_SOBEL, &COpenCVMFCView::OnUpdateSobel)
+	ON_COMMAND(ID_SOBEL, &COpenCVMFCView::OnSobel)
+	ON_UPDATE_COMMAND_UI(ID_LAPLACE, &COpenCVMFCView::OnUpdateLaplace)
+	ON_COMMAND(ID_LAPLACE, &COpenCVMFCView::OnLaplace)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -166,10 +170,10 @@ void COpenCVMFCView::OnDraw(CDC* pDC)
 	}
 
 	char *pBits;
-	if (m_CaptFlag==1)
-		pBits=m_Frame->imageData;
+	if (m_CaptFlag == 1)
+		pBits = m_Frame->imageData;
 	else if (workImg)
-		pBits=workImg->imageData;
+		pBits = workImg->imageData;
 
 	if (workImg) {                          //  refresh UI
 		StretchDIBits(pDC->m_hDC,
@@ -185,6 +189,7 @@ void COpenCVMFCView::OnInitialUpdate()
 
 	CSize sizeTotal;
 	// TODO: calculate the total size of this view
+
 	sizeTotal.cx = sizeTotal.cy = 100;
 	SetScrollSizes(MM_TEXT, sizeTotal);
 }
@@ -994,6 +999,114 @@ void COpenCVMFCView::OnMedianSmooth()
 	m_dibFlag = imageReplace(out,&workImg);
 
 	cvReleaseImage(&out);
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateSobel(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnSobel()
+{
+	// TODO: Add your command handler code here
+
+	IplImage* pImage;
+	IplImage* pImgSobel = NULL;
+	IplImage* pImgPlanes[3] = {0,0,0};
+	int i;
+
+	pImage = workImg;
+
+	pImgSobel = cvCreateImage(cvGetSize(pImage),
+		IPL_DEPTH_16S,1);   //  Create Working Image
+
+	if (workImg->nChannels == 1) {            //  Handle Single Channel
+		cvSobel(pImage,pImgSobel,1,1,3);
+		cvConvertScaleAbs(pImgSobel,pImage, 1, 0 );
+	}
+	else {                                  //  Handle Triad Ones
+		for (i = 0; i < 3; i++) {
+			pImgPlanes[i] = cvCreateImage(cvGetSize(pImage),
+				IPL_DEPTH_8U,1);    //  Create Sub Image
+		}
+
+		cvCvtPixToPlane(pImage,pImgPlanes[0],
+			pImgPlanes[1],pImgPlanes[2],0);  //  Get Sub
+
+		for (i = 0; i < 3; i++) {                 //  Handle Sub Independently
+			cvSobel(pImgPlanes[i],pImgSobel,1,1,3);
+			cvConvertScaleAbs(pImgSobel,pImgPlanes[i], 1, 0 );
+		}
+
+		cvCvtPlaneToPix(pImgPlanes[0],pImgPlanes[1],
+			pImgPlanes[2],0,pImage);    //  Form Color Image From Sub Images
+
+		for (i = 0; i < 3; i++) {
+			cvReleaseImage(&pImgPlanes[i]);  //  Release Sub Image
+		}
+	}
+
+	cvReleaseImage(&pImgSobel);             //  Release Working Image
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateLaplace(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnLaplace()
+{
+	// TODO: Add your command handler code here
+
+	IplImage* pImage;
+	IplImage* pImgLaplace = NULL;
+	IplImage* pImgPlanes[3] = {0,0,0};
+	int i;
+
+	pImage = workImg;
+
+	pImgLaplace = cvCreateImage(cvGetSize(pImage),
+		IPL_DEPTH_16S,1);
+
+	if (workImg->nChannels == 1) {
+		cvLaplace(pImage,pImgLaplace,3);
+		cvConvertScaleAbs(pImgLaplace,pImage, 1, 0 );
+	}
+	else {
+		for (i = 0; i < 3; i++) {
+			pImgPlanes[i] = cvCreateImage(cvGetSize(pImage),
+				IPL_DEPTH_8U,1);
+		}
+
+		cvCvtPixToPlane(pImage,pImgPlanes[0],
+			pImgPlanes[1],pImgPlanes[2],0);
+
+		for (i = 0; i < 3; i++) {
+			cvLaplace(pImgPlanes[i],pImgLaplace,3);
+			cvConvertScaleAbs(pImgLaplace,pImgPlanes[i], 1, 0 );
+		}
+
+		cvCvtPlaneToPix(pImgPlanes[0],pImgPlanes[1],
+			pImgPlanes[2],0,pImage);
+
+		for (i = 0; i < 3; i++) {
+			cvReleaseImage(&pImgPlanes[i]);
+		}
+	}
+
+	cvReleaseImage(&pImgLaplace);
 
 	Invalidate();
 }
