@@ -48,17 +48,17 @@ int  imageType(IplImage* p)
   	int	 i,j,k,bpl,n,pg[256];
 	BYTE *buf;
   
-	k=p->nChannels;
+	k = p->nChannels;
 	if (k == 1) {                             //  check bi-value image
         for (i=0;i<256;i++) pg[i]=0;
-		buf=(BYTE*)p->imageData;
-		bpl=p->widthStep;
-        for (i=0;i<p->height;i++) {
-			for (j=0;j<p->width;j++) pg[buf[j]]++;
-			buf+=bpl;
+		buf = (BYTE*)p->imageData;
+		bpl = p->widthStep;
+        for (i = 0; i < p->height; i++) {
+			for (j = 0; j < p->width; j++) pg[buf[j]]++;
+			buf += bpl;
 		}
 
-        for (i=0,n=0;i<256;i++) {
+        for (i = 0,n = 0; i < 256; i++) {
 			if (pg[i]) n++;
 		}
 

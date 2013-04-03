@@ -50,6 +50,10 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_FLIP, &COpenCVMFCView::OnFlip)
 	ON_UPDATE_COMMAND_UI(ID_ROTATION_30, &COpenCVMFCView::OnUpdateRotation30)
 	ON_COMMAND(ID_ROTATION_30, &COpenCVMFCView::OnRotation30)
+	ON_UPDATE_COMMAND_UI(ID_WARP_AFFINE, &COpenCVMFCView::OnUpdateWarpAffine)
+	ON_COMMAND(ID_WARP_AFFINE, &COpenCVMFCView::OnWarpAffine)
+	ON_UPDATE_COMMAND_UI(ID_WARP_PERSPECT, &COpenCVMFCView::OnUpdateWarpPerspect)
+	ON_COMMAND(ID_WARP_PERSPECT, &COpenCVMFCView::OnWarpPerspect)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -403,11 +407,13 @@ void COpenCVMFCView::OnColorToGray()
 
 	cvCvtColor(pImage, pImg8u, CV_BGR2GRAY);
 
-	m_dibFlag=imageReplace(pImg8u,&workImg);
+	m_dibFlag = imageReplace(pImg8u,&workImg);
 
 	imageClone(workImg,&saveImg);
 
-	m_SaveFlag=m_ImageType=1;
+	m_SaveFlag = m_ImageType = 1;
+
+	cvReleaseImage( &pImg8u);
 
 	Invalidate();
 }
@@ -421,7 +427,6 @@ void COpenCVMFCView::OnImageInvert()
 
 	Invalidate();
 }
-
 
 
 void COpenCVMFCView::OnUpdateFlipV(CCmdUI *pCmdUI)
@@ -483,10 +488,190 @@ void COpenCVMFCView::OnFlip()
 void COpenCVMFCView::OnUpdateRotation30(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag!=1)&&
+		(m_ImageType)&&(m_ImageType!=-3));
 }
 
 
 void COpenCVMFCView::OnRotation30()
 {
 	// TODO: Add your command handler code here
+
+	int angle = 30;                         //  Rotate 30 degree
+	int opt = 0;                            //  1: with resize   0: just rotate
+	double factor;                          //  resize factor
+	IplImage *pImage;
+	IplImage *pImgRotation = NULL;
+
+	pImage = workImg;
+	pImgRotation = cvCloneImage(workImg);
+
+	angle = -angle;
+
+	//  Create M Matrix
+	float m[6];
+	//      Matrix m looks like:
+	//      [ m0  m1  m2 ] ----> [ a11  a12  b1 ]
+	//      [ m3  m4  m5 ] ----> [ a21  a22  b2 ]
+
+	CvMat M = cvMat(2,3,CV_32F,m);
+	int w = workImg->width;
+	int h = workImg->height;
+
+	if (opt)
+		factor = (cos(angle*CV_PI/180.)+1.0)*2;
+	else 
+		factor = 1;
+
+	m[0] = (float)(factor*cos(-angle*CV_PI/180.));
+	m[1] = (float)(factor*sin(-angle*CV_PI/180.));
+	m[3] = -m[1];
+	m[4] =  m[0];
+	//  Make rotation center to image center
+	m[2] = w*0.5f;
+	m[5] = h*0.5f;
+
+	//---------------------------------------------------------
+	//  dst(x,y) = A * src(x,y) + b
+	cvZero(pImgRotation);
+	cvGetQuadrangleSubPix(pImage,pImgRotation,&M);
+	//---------------------------------------------------------
+
+	cvNamedWindow("Rotation Image");
+	cvFlip(pImgRotation);
+	cvShowImage("Rotation Image",pImgRotation);
+
+	cvReleaseImage( &pImgRotation);
+
+	cvWaitKey(0);
+
+	cvDestroyWindow("Rotation Image");
+}
+
+
+void COpenCVMFCView::OnUpdateWarpAffine(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) &&
+		(m_ImageType) && (m_ImageType!=-3));
+}
+
+
+void COpenCVMFCView::OnWarpAffine()
+{
+	// TODO: Add your command handler code here
+
+	CvPoint2D32f srcTri[3], dstTri[3];
+	CvMat* rot_mat  = cvCreateMat(2,3,CV_32FC1);
+	CvMat* warp_mat = cvCreateMat(2,3,CV_32FC1);
+	IplImage *src=0, *dst=0;
+
+	src = cvCloneImage(workImg);
+	cvFlip(src);
+	dst = cvCloneImage(src);
+	dst->origin = src->origin;
+	cvZero(dst);
+
+	//COMPUTE WARP MATRIX
+	srcTri[0].x = 0;                          //src Top left
+	srcTri[0].y = 0;
+	srcTri[1].x = (float) src->width - 1;     //src Top right
+	srcTri[1].y = 0;
+	srcTri[2].x = 0;                          //src Bottom left
+	srcTri[2].y = (float) src->height - 1;
+	//- - - - - - - - - - - - - - -//
+	dstTri[0].x = (float)(src->width*0.0);    //dst Top left
+	dstTri[0].y = (float)(src->height*0.33);
+	dstTri[1].x = (float)(src->width*0.85);   //dst Top right
+	dstTri[1].y = (float)(src->height*0.25);
+	dstTri[2].x = (float)(src->width*0.15);   //dst Bottom left
+	dstTri[2].y = (float)(src->height*0.7);
+	cvGetAffineTransform(srcTri,dstTri,warp_mat);
+	cvWarpAffine(src,dst,warp_mat);
+	cvCopy(dst,src);
+
+	//COMPUTE ROTATION MATRIX
+	CvPoint2D32f center = cvPoint2D32f(src->width/2,src->height/2);
+	double angle = -50.0;
+	double scale = 0.6;
+	cv2DRotationMatrix(center,angle,scale,rot_mat);
+	cvWarpAffine(src,dst,rot_mat);
+
+	//DO THE TRANSFORM:
+	cvNamedWindow( "Affine_Transform", 1 );
+	cvShowImage( "Affine_Transform", dst );
+
+	m_ImageType = -3;
+
+	cvWaitKey();
+
+	cvDestroyWindow( "Affine_Transform" );
+	cvReleaseImage(&src);
+	cvReleaseImage(&dst);
+	cvReleaseMat(&rot_mat);
+	cvReleaseMat(&warp_mat);
+
+	m_ImageType=imageType(workImg);
+}
+
+
+void COpenCVMFCView::OnUpdateWarpPerspect(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) &&
+		(m_ImageType) && (m_ImageType != -3));
+}
+
+
+
+void COpenCVMFCView::OnWarpPerspect()
+{
+	// TODO: Add your command handler code here
+
+	CvPoint2D32f srcQuad[4], dstQuad[4];
+	CvMat* warp_matrix = cvCreateMat(3,3,CV_32FC1);
+	IplImage *src=0, *dst=0;
+
+	src = cvCloneImage(workImg);
+	cvFlip(src);
+	dst = cvCloneImage(src);
+	dst->origin = src->origin;
+	cvZero(dst);
+
+	srcQuad[0].x = 0;                         //src Top left
+	srcQuad[0].y = 0;
+	srcQuad[1].x = (float) src->width - 1;    //src Top right
+	srcQuad[1].y = 0;
+	srcQuad[2].x = 0;                         //src Bottom left
+	srcQuad[2].y = (float) src->height - 1;
+	srcQuad[3].x = (float) src->width - 1;    //src Bot right
+	srcQuad[3].y = (float) src->height - 1;
+	//- - - - - - - - - - - - - -//
+	dstQuad[0].x = (float)(src->width*0.05);  //dst Top left
+	dstQuad[0].y = (float)(src->height*0.33);
+	dstQuad[1].x = (float)(src->width*0.9);   //dst Top right
+	dstQuad[1].y = (float)(src->height*0.25);
+	dstQuad[2].x = (float)(src->width*0.2);   //dst Bottom left
+	dstQuad[2].y = (float)(src->height*0.7);      
+	dstQuad[3].x = (float)(src->width*0.8);   //dst Bot right
+	dstQuad[3].y = (float)(src->height*0.9);
+
+	cvGetPerspectiveTransform(srcQuad,dstQuad,warp_matrix);
+	cvWarpPerspective(src,dst,warp_matrix);
+
+	cvNamedWindow( "Perspective_Warp", 1 );
+	cvShowImage( "Perspective_Warp", dst );
+
+	m_ImageType=-3;
+	cvWaitKey();
+
+	cvDestroyWindow( "Perspective_Warp" );
+	cvReleaseImage(&src);
+	cvReleaseImage(&dst);
+	cvReleaseMat(&warp_matrix);
+
+	m_ImageType=imageType(workImg);
 }

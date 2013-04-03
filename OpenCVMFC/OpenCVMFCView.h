@@ -77,6 +77,12 @@ public:
 	afx_msg void OnFlipH();
 	afx_msg void OnUpdateFlip(CCmdUI *pCmdUI);
 	afx_msg void OnFlip();
+	afx_msg void OnUpdateRotation30(CCmdUI *pCmdUI);
+	afx_msg void OnRotation30();
+	afx_msg void OnUpdateWarpAffine(CCmdUI *pCmdUI);
+	afx_msg void OnWarpAffine();
+	afx_msg void OnUpdateWarpPerspect(CCmdUI *pCmdUI);
+	afx_msg void OnWarpPerspect();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp
