@@ -1,12 +1,13 @@
 //  Processing.cpp
 //    2010.8.23
+// Modified by hustcalm @ 2013.04.03
 
 #include "stdafx.h"
 
 //---------------------------------------------------------
 
 LPBITMAPINFO CtreateMapInfo(IplImage* workImg,int flag)
-{                                           //  建立位图信息
+{                                           
     BITMAPINFOHEADER BIH={40,1,1,1,8,0,0,0,0,0,0};
 	LPBITMAPINFO lpBmi;
 	int      wid,hei,bits,colors,i;
@@ -22,20 +23,20 @@ LPBITMAPINFO CtreateMapInfo(IplImage* workImg,int flag)
 	BIH.biWidth   =wid;
 	BIH.biHeight  =hei;
 	BIH.biBitCount=(BYTE) bits;
-  	memcpy(lpBmi,&BIH,40);                  //  复制位图信息头
+  	memcpy(lpBmi,&BIH,40);                  //  Copy Bitmap Info Header
 
-	if (bits==8) {                          //  256 色位图
-		if (flag==1) {                      //  设置灰阶调色板
-			for (i=0;i<256;i++) {
-				VgaColorTab[i].rgbRed=VgaColorTab[i].rgbGreen=
-						VgaColorTab[i].rgbBlue=(BYTE) i;
+	if (bits == 8) {                          //  256 color bitmap
+		if (flag == 1) {                      //  set gray palatte
+			for (i = 0; i < 256; i++) {
+				VgaColorTab[i].rgbRed = VgaColorTab[i].rgbGreen =
+						VgaColorTab[i].rgbBlue = (BYTE) i;
 			}
 			memcpy(lpBmi->bmiColors,VgaColorTab,1024);
 		}
-		else if (flag==2) {                 //  设置默认调色板
+		else if (flag == 2) {                 //  set default palatte
 			memcpy(lpBmi->bmiColors,VgaDefPal,1024);
 		}
-		else if (flag==3) {                 //  设置自定义调色板
+		else if (flag == 3) {                 //  set customize palatte
 			memcpy(lpBmi->bmiColors,VgaColorTab,1024);
 		}
 	}
@@ -48,7 +49,7 @@ int  imageType(IplImage* p)
 	BYTE *buf;
   
 	k=p->nChannels;
-	if (k==1) {                             //  检查二值图像
+	if (k == 1) {                             //  check bi-value image
         for (i=0;i<256;i++) pg[i]=0;
 		buf=(BYTE*)p->imageData;
 		bpl=p->widthStep;
@@ -56,33 +57,36 @@ int  imageType(IplImage* p)
 			for (j=0;j<p->width;j++) pg[buf[j]]++;
 			buf+=bpl;
 		}
+
         for (i=0,n=0;i<256;i++) {
 			if (pg[i]) n++;
 		}
-        if (n==2) k=-1;                     //  二值图像
+
+        if (n == 2) 
+			k=-1;                     //  bi-value image
     }
   	return(k);
 }
 
-int  imageClone(IplImage* pi,IplImage** ppo)  //  复制 IplImage 位图
+int  imageClone(IplImage* pi,IplImage** ppo)  //  Copy IplImage Image
 {
 	if (*ppo) {
-		cvReleaseImage(ppo);                //  释放原来位图
+		cvReleaseImage(ppo);                //  Release Previous Image
 	}
- 	(*ppo) = cvCloneImage(pi);              //  复制新位图
+ 	(*ppo) = cvCloneImage(pi);              //  Copy New Image
 	return(1);
 }
 
-int  imageReplace(IplImage* pi,IplImage** ppo)  //  位图替换
+int  imageReplace(IplImage* pi,IplImage** ppo)  //  Replace IplImage Image
 {
 	if (*ppo) 
-		cvReleaseImage(ppo);                //  释放原来位图
- 	(*ppo) = pi;                            //  位图换名
+		cvReleaseImage(ppo);                //  Release Previous Image
+ 	(*ppo) = pi;                            //  Rename Image
 	return(1);
 }
 
 //---------------------------------------------------------
-//  VGA 256色默认调色板数据
+//  VGA 256 color default palatte data
 
 RGBQUAD VgaDefPal[256] = {
     {0x00,0x00,0x00,0x00},{0xa8,0x00,0x00,0x00},{0x00,0xa8,0x00,0x00},{0xa8,0xa8,0x00,0x00},
@@ -153,10 +157,10 @@ RGBQUAD VgaDefPal[256] = {
 RGBQUAD  VgaColorTab[256];
  
 //---------------------------------------------------------
-//  常规图像处理
+//  Regular Image Processing
 
 void ImageDwindle(IplImage *pi,IplImage *po,int n,int nCnls)   
-{                                           //  图像整数倍缩小
+{                                           //  Image resise by Integer Factor
 	int  i,j,k,bpl,bplt;
 	char *buf,*buft;
 
@@ -164,24 +168,23 @@ void ImageDwindle(IplImage *pi,IplImage *po,int n,int nCnls)
 	buf=pi->imageData;     buft=po->imageData;
 	for (i=0;i<pi->height;i+=n) {
 		for (j=0,k=0;j<pi->width*nCnls;k+=nCnls,j+=n*nCnls)
-			memcpy(&buft[k],&buf[j],nCnls);   //  复制一个像素
+			memcpy(&buft[k],&buf[j],nCnls);   //  Copy One Pixel
 		buf+=n*bpl;     buft+=bplt;
 	}
-
 }
 
-int  NextColor(int start,int k,int step)    //  下一彩色号
+int  NextColor(int start,int k,int step)    //  Next Color Index
 {
-	k++;                                    //  修改颜色号
-	if (k==7) k+=2;                         //  跳过默认调色板7、8号颜色
-	else if (k==15) k+=17;                  //  跳过默认调色板15~31号颜色
-	if (k>32) k+=step-1;  
-	if (k>247) k=start;                     //  超过默认调色板248号颜色，从头开始
+	k++;                                    //  Update Color Index
+	if (k == 7) k += 2;                     //  ignore 7 and 8
+	else if (k == 15) k += 17;              //  ignore 15~31
+	if (k > 32) k += step-1;  
+	if (k > 247) k = start;                 //  Start Over
 	return(k);
 }
   
 void Histog(BYTE *buf,int *pg,int Dx,int Dy)
-{                                          //  统计直方图                              
+{                                                            
   int  i;
  
   for (i=0;i<256;i++)  pg[i]=0;
@@ -189,51 +192,57 @@ void Histog(BYTE *buf,int *pg,int Dx,int Dy)
 }
 
 int  BasicGlobalThreshold(int *pg,int start,int end)
-{                                           //  基本全局阈值法
+{                                           
    int  i,t,t1,t2,k1,k2;
    double u,u1,u2;
   
    t=0;     u=0;
-   for (i=start;i<end;i++) {
-      t+=pg[i];		
-	  u+=i*pg[i];
+   for (i = start; i < end; i++) {
+      t += pg[i];		
+	  u += i*pg[i];
    }
-   k2=(int) (u/t);                          //  计算此范围灰度的平均值
+   k2 = (int) (u/t);                          
 
    do {
-      k1=k2;
-      t1=0;     u1=0;
-      for (i=start;i<=k1;i++) {             //  计算低灰度组的累加和
-	     t1+=pg[i];	
-		 u1+=i*pg[i];
-      }
-      t2=t-t1;
-      u2=u-u1;
-      if (t1) u1=u1/t1;                     //  计算低灰度组的平均值
-      else u1=0;
-      if (t2) u2=u2/t2;                     //  计算高灰度组的平均值
-      else u2=0;
-	  k2=(int) ((u1+u2)/2);                 //  得到新的阈值估计值
-   }
-   while(k1!=k2);                           //  数据未稳定，继续
+      k1 = k2;
+      t1 = 0;     
+	  u1 = 0;
 
-   return(k1);                              //  返回阈值
+      for (i = start; i <= k1; i++) {             
+	     t1 += pg[i];	
+		 u1 += i*pg[i];
+      }
+      t2 = t - t1;
+      u2 = u - u1;
+      if (t1) 
+		  u1 = u1/t1;                     
+      else
+		  u1=0;
+      if (t2) 
+		  u2 = u2/t2;                     
+      else 
+		  u2 = 0;
+	  k2 = (int)((u1 + u2)/2);                 
+   }
+   while(k1 != k2);                           //  Unstable? Continue
+
+   return(k1);                              
 }
 
 void Thresholding(BYTE *buf,int Dx,int Dy,int thre,int m)
-{                                           //  实现灰度变换
+{                                          
   BYTE **list;
   int  i,j,T_gray[256];
   
-  list=(BYTE**) malloc(Dy*sizeof(BYTE*));   //  申请二维输入数组
-  for(i=0;i<Dy;i++) list[i]=buf+i*Dx;
+  list=(BYTE**) malloc(Dy*sizeof(BYTE*));  
+  for(i = 0; i < Dy; i++) list[i] = buf + i*Dx;
 
-  for (i=0;i<thre;i++)   T_gray[i]=0;       //  低于阈值改黑色
-  for (i=thre;i<256;i++) T_gray[i]=m;       //  高于、等于阈值改白色
+  for (i = 0; i < thre; i++)   T_gray[i] = 0;       
+  for (i = thre; i<256; i++) T_gray[i]=m;       
 
-  for (i=0;i<Dy;i++) {                                 
-    for (j=0;j<Dx;j++) {
-       list[i][j]=(BYTE) T_gray[list[i][j]];      
+  for (i = 0;i < Dy; i++) {                                 
+    for (j = 0;j < Dx; j++) {
+       list[i][j] = (BYTE) T_gray[list[i][j]];      
     }
   }
 
@@ -242,28 +251,26 @@ void Thresholding(BYTE *buf,int Dx,int Dy,int thre,int m)
 
 void GrayColorTransfor(RGBQUAD *pal) 
 {
-	int     i,j;
+	int i,j;
   
-	for (i=0,j=0;i<64;i++,j+=4) {           //  按变换曲线送各单元颜色分量
-		pal[i].rgbRed  =0;
-		pal[i].rgbGreen=(BYTE) j;
-		pal[i].rgbBlue =255;
+	for (i = 0,j = 0; i < 64; i++,j += 4) {           
+		pal[i].rgbRed = 0;
+		pal[i].rgbGreen = (BYTE) j;
+		pal[i].rgbBlue = 255;
 	}
-	for (i=64,j=0;i<128;i++,j+=4) {         //  按变换曲线送各单元颜色分量
-		pal[i].rgbRed  =0;
-		pal[i].rgbGreen=255;
+	for (i = 64,j = 0; i < 128; i++,j += 4) {         
+		pal[i].rgbRed = 0;
+		pal[i].rgbGreen = 255;
 		pal[i].rgbBlue =(BYTE) (255-j);
 	}
-	for (i=128,j=0;i<192;i++,j+=4) {        //  按变换曲线送各单元颜色分量
+	for (i = 128,j = 0; i < 192; i++,j += 4) {        
 		pal[i].rgbRed  =(BYTE) j;
-		pal[i].rgbGreen=255;
-		pal[i].rgbBlue =0;
+		pal[i].rgbGreen = 255;
+		pal[i].rgbBlue = 0;
 	}
-	for (i=192,j=0;i<256;i++,j+=4) {        //  按变换曲线送各单元颜色分量
+	for (i = 192,j = 0; i < 256; i++,j += 4) {      
 		pal[i].rgbRed  =255;
-		pal[i].rgbGreen=(BYTE) (255-j);
-		pal[i].rgbBlue =0;
+		pal[i].rgbGreen =(BYTE) (255-j);
+		pal[i].rgbBlue = 0;
 	}
 }
-
- 
