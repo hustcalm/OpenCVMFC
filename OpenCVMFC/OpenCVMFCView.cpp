@@ -60,6 +60,12 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_IMAGE_HISTOGRAM, &COpenCVMFCView::OnImageHistogram)
 	ON_UPDATE_COMMAND_UI(ID_HIST_EQUALIZE, &COpenCVMFCView::OnUpdateHistEqualize)
 	ON_COMMAND(ID_HIST_EQUALIZE, &COpenCVMFCView::OnHistEqualize)
+	ON_UPDATE_COMMAND_UI(ID_BLUR_SMOOTH, &COpenCVMFCView::OnUpdateBlurSmooth)
+	ON_COMMAND(ID_BLUR_SMOOTH, &COpenCVMFCView::OnBlurSmooth)
+	ON_UPDATE_COMMAND_UI(ID_GAUSS_SMOOTH, &COpenCVMFCView::OnUpdateGaussSmooth)
+	ON_COMMAND(ID_GAUSS_SMOOTH, &COpenCVMFCView::OnGaussSmooth)
+	ON_UPDATE_COMMAND_UI(ID_MEDIAN_SMOOTH, &COpenCVMFCView::OnUpdateMedianSmooth)
+	ON_COMMAND(ID_MEDIAN_SMOOTH, &COpenCVMFCView::OnMedianSmooth)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -420,7 +426,7 @@ void COpenCVMFCView::OnColorToGray()
 	m_SaveFlag = m_ImageType = 1;
 
 	//cvReleaseImage( &pImage);
-	cvReleaseImage( &pImg8u);
+	//cvReleaseImage(&pImg8u);
 
 	Invalidate();
 }
@@ -549,7 +555,7 @@ void COpenCVMFCView::OnRotation30()
 	cvFlip(pImgRotation);
 	cvShowImage("Rotation Image",pImgRotation);
 
-	cvReleaseImage( &pImgRotation);
+	cvReleaseImage(&pImgRotation);
 
 	cvWaitKey(0);
 
@@ -901,6 +907,93 @@ void COpenCVMFCView::OnHistEqualize()
 
 	//cvReleaseImage( &src );
 	cvReleaseImage( &dst );
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateBlurSmooth(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnBlurSmooth()
+{
+	// TODO: Add your command handler code here
+
+	IplImage* in;
+
+	in = workImg;
+
+	IplImage* out = cvCreateImage(cvGetSize(in),
+		IPL_DEPTH_8U,workImg->nChannels); 
+
+	cvSmooth(in,out,CV_BLUR,3,workImg->nChannels);  //  Simple Smooth
+
+	m_dibFlag = imageReplace(out,&workImg); 
+
+	cvReleaseImage(&out);
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateGaussSmooth(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnGaussSmooth()
+{
+	// TODO: Add your command handler code here
+
+	IplImage* in;
+
+	in = workImg;
+
+	IplImage* out = cvCreateImage(cvGetSize(in),
+		IPL_DEPTH_8U,workImg->nChannels);   
+
+	cvSmooth(in,out,CV_GAUSSIAN,3,workImg->nChannels);  //  Gauss Smooth
+
+	m_dibFlag = imageReplace(out,&workImg);
+
+	cvReleaseImage(&out);
+
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateMedianSmooth(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnMedianSmooth()
+{
+	// TODO: Add your command handler code here
+
+	IplImage* in;
+
+	in = workImg;
+
+	IplImage* out = cvCreateImage(cvGetSize(in),
+		IPL_DEPTH_8U,workImg->nChannels); 
+
+	cvSmooth(in,out,CV_MEDIAN,3,workImg->nChannels);  //  Median Smooth
+
+	m_dibFlag = imageReplace(out,&workImg);
+
+	cvReleaseImage(&out);
 
 	Invalidate();
 }

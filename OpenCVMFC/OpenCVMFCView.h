@@ -89,6 +89,12 @@ public:
 	afx_msg void OnImageHistogram();
 	afx_msg void OnUpdateHistEqualize(CCmdUI *pCmdUI);
 	afx_msg void OnHistEqualize();
+	afx_msg void OnUpdateBlurSmooth(CCmdUI *pCmdUI);
+	afx_msg void OnBlurSmooth();
+	afx_msg void OnUpdateGaussSmooth(CCmdUI *pCmdUI);
+	afx_msg void OnGaussSmooth();
+	afx_msg void OnUpdateMedianSmooth(CCmdUI *pCmdUI);
+	afx_msg void OnMedianSmooth();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp
