@@ -74,6 +74,10 @@ BEGIN_MESSAGE_MAP(COpenCVMFCView, CScrollView)
 	ON_COMMAND(ID_THRESHOLDING_1, &COpenCVMFCView::OnThresholding1)
 	ON_UPDATE_COMMAND_UI(ID_THRESHOLDING_2, &COpenCVMFCView::OnUpdateThresholding2)
 	ON_COMMAND(ID_THRESHOLDING_2, &COpenCVMFCView::OnThresholding2)
+	ON_UPDATE_COMMAND_UI(ID_ADAPTIVE_THRESHOLD, &COpenCVMFCView::OnUpdateAdaptiveThreshold)
+	ON_COMMAND(ID_ADAPTIVE_THRESHOLD, &COpenCVMFCView::OnAdaptiveThreshold)
+	ON_UPDATE_COMMAND_UI(ID_BASIC_GLOBAL_THRESHOLD, &COpenCVMFCView::OnUpdateBasicGlobalThreshold)
+	ON_COMMAND(ID_BASIC_GLOBAL_THRESHOLD, &COpenCVMFCView::OnBasicGlobalThreshold)
 END_MESSAGE_MAP()
 
 // COpenCVMFCView construction/destruction
@@ -1225,5 +1229,57 @@ void COpenCVMFCView::OnThresholding2()
 	cvDestroyWindow(threWin);
 
 	m_ImageType = -1;
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateAdaptiveThreshold(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnAdaptiveThreshold()
+{
+	// TODO: Add your command handler code here
+
+	cvAdaptiveThreshold(workImg,workImg,255,
+		CV_ADAPTIVE_THRESH_GAUSSIAN_C,
+		CV_THRESH_BINARY_INV,3,5);
+
+	m_ImageType = -1;
+	
+	Invalidate();
+}
+
+
+void COpenCVMFCView::OnUpdateBasicGlobalThreshold(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+	pCmdUI->Enable((m_CaptFlag != 1) && (m_ImageType == 1));
+}
+
+
+void COpenCVMFCView::OnBasicGlobalThreshold()
+{
+	// TODO: Add your command handler code here
+
+	int  pg[256],i,thre;
+
+	for (i = 0; i < 256; i++) 
+		pg[i]=0;
+
+	for (i = 0; i < workImg->imageSize; i++)
+		pg[(BYTE)workImg->imageData[i]]++;
+
+	thre = BasicGlobalThreshold(pg,0,256); 
+
+	cvThreshold(workImg,workImg,thre,255,CV_THRESH_BINARY);
+
+	m_ImageType = -1;
+
 	Invalidate();
 }

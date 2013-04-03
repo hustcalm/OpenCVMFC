@@ -103,6 +103,10 @@ public:
 	afx_msg void OnThresholding1();
 	afx_msg void OnUpdateThresholding2(CCmdUI *pCmdUI);
 	afx_msg void OnThresholding2();
+	afx_msg void OnUpdateAdaptiveThreshold(CCmdUI *pCmdUI);
+	afx_msg void OnAdaptiveThreshold();
+	afx_msg void OnUpdateBasicGlobalThreshold(CCmdUI *pCmdUI);
+	afx_msg void OnBasicGlobalThreshold();
 };
 
 #ifndef _DEBUG  // debug version in OpenCVMFCView.cpp
